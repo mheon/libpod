@@ -1265,14 +1265,11 @@ func WithNamedVolumes(volumes []*ContainerNamedVolume) CtrCreateOption {
 		destinations := make(map[string]bool)
 
 		for _, vol := range volumes {
-			// First check if libpod has the volumes
-			_, err := ctr.runtime.GetVolume(vol.Name)
-			if err != nil {
-				return errors.Wrapf(err, "error retrieving volume %s to add to container", vol.Name)
-			}
+			// Don't check if they already exist.
+			// If they don't we will automatically create them.
 
 			if _, ok := destinations[vol.Dest]; ok {
-				return errors.Wrapf(err, "two volumes found with destination %s", vol.Dest)
+				return errors.Wrapf(ErrInvalidArg, "two volumes found with destination %s", vol.Dest)
 			}
 			destinations[vol.Dest] = true
 
