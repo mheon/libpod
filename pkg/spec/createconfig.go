@@ -132,11 +132,11 @@ type CreateConfig struct {
 	Volumes            []string              //volume
 	VolumesFrom        []string
 	NamedVolumes       []*libpod.ContainerNamedVolume // Filled in by CreateConfigToOCISpec
-	WorkDir            string   //workdir
-	LabelOpts          []string //SecurityOpts
-	NoNewPrivs         bool     //SecurityOpts
-	ApparmorProfile    string   //SecurityOpts
-	SeccompProfilePath string   //SecurityOpts
+	WorkDir            string                         //workdir
+	LabelOpts          []string                       //SecurityOpts
+	NoNewPrivs         bool                           //SecurityOpts
+	ApparmorProfile    string                         //SecurityOpts
+	SeccompProfilePath string                         //SecurityOpts
 	SecurityOpts       []string
 	Rootfs             string
 	LocalVolumes       []spec.Mount //Keeps track of the built-in volumes of container used in the --volumes-from flag
