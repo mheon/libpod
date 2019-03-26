@@ -1303,28 +1303,6 @@ func WithVolumeName(name string) VolumeCreateOption {
 	}
 }
 
-// WithVolumeUID sets the uid of the owner.
-func WithVolumeUID(uid int) VolumeCreateOption {
-	return func(volume *Volume) error {
-		if volume.valid {
-			return ErrVolumeFinalized
-		}
-		volume.config.UID = uid
-		return nil
-	}
-}
-
-// WithVolumeGID sets the gid of the owner.
-func WithVolumeGID(gid int) VolumeCreateOption {
-	return func(volume *Volume) error {
-		if volume.valid {
-			return ErrVolumeFinalized
-		}
-		volume.config.GID = gid
-		return nil
-	}
-}
-
 // WithVolumeLabels sets the labels of the volume.
 func WithVolumeLabels(labels map[string]string) VolumeCreateOption {
 	return func(volume *Volume) error {
@@ -1365,6 +1343,32 @@ func WithVolumeOptions(options map[string]string) VolumeCreateOption {
 		for key, value := range options {
 			volume.config.Options[key] = value
 		}
+
+		return nil
+	}
+}
+
+// WithVolumeUID sets the UID that the volume will be created as.
+func WithVolumeUID(uid int) VolumeCreateOption {
+	return func(volume *Volume) error {
+		if volume.valid {
+			return ErrVolumeFinalized
+		}
+
+		volume.config.UID = uid
+
+		return nil
+	}
+}
+
+// WithVolumeGID sets the GID that the volume will be created as.
+func WithVolumeGID(gid int) VolumeCreateOption {
+	return func(volume *Volume) error {
+		if volume.valid {
+			return ErrVolumeFinalized
+		}
+
+		volume.config.GID = gid
 
 		return nil
 	}

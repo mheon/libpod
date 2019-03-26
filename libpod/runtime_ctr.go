@@ -185,7 +185,8 @@ func (r *Runtime) newContainer(ctx context.Context, rSpec *spec.Spec, options ..
 		}
 
 		// The volume does not exist, so we need to create it.
-		newVol, err := r.newVolume(ctx, WithVolumeName(vol.Name), withSetCtrSpecific())
+		newVol, err := r.newVolume(ctx, WithVolumeName(vol.Name), withSetCtrSpecific(),
+			WithVolumeUID(ctr.RootUID()), WithVolumeGID(ctr.RootGID()))
 		if err != nil {
 			return nil, errors.Wrapf(err, "error creating named volume %q", vol.Name)
 		}
