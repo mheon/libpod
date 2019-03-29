@@ -60,8 +60,11 @@ func splitNamedVolumes(mounts []spec.Mount) ([]spec.Mount, []*libpod.ContainerNa
 			newMounts = append(newMounts, mount)
 			continue
 		}
-		// Volumes that are not named volumes must be an absolute or relative path
-		if strings.Contains(mount.Source, "/") || strings.Contains(mount.Source, ".") {
+		// Volumes that are not named volumes must be an absolute or
+		// relative path.
+		// Volume names may not begin with a non-alphanumeric character
+		// so the HasPrefix() check is safe here.
+		if strings.HasPrefix(mount.Source, "/") || strings.HasPrefix(mount.Source, ".") {
 			newMounts = append(newMounts, mount)
 		} else {
 			namedVolume := new(libpod.ContainerNamedVolume)
