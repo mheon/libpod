@@ -138,7 +138,6 @@ type CreateConfig struct {
 	SeccompProfilePath string                         //SecurityOpts
 	SecurityOpts       []string
 	Rootfs             string
-	LocalVolumes       []spec.Mount //Keeps track of the built-in volumes of container used in the --volumes-from flag
 	Syslog             bool         // Whether to enable syslog on exit commands
 }
 
@@ -220,7 +219,7 @@ func (c *CreateConfig) initFSMounts() []spec.Mount {
 
 // GetVolumeMounts takes user provided input for bind mounts and creates Mount structs
 func (c *CreateConfig) GetVolumeMounts(specMounts []spec.Mount) ([]spec.Mount, error) {
-	m := c.LocalVolumes
+	m := []spec.Mount{}
 	for _, i := range c.Volumes {
 		var options []string
 		spliti := strings.Split(i, ":")
@@ -450,10 +449,6 @@ func (c *CreateConfig) GetContainerCreateOptions(runtime *libpod.Runtime, pod *l
 
 	if len(c.NamedVolumes) != 0 {
 		options = append(options, libpod.WithNamedVolumes(c.NamedVolumes))
-	}
-
-	if len(c.LocalVolumes) != 0 {
-		options = append(options, libpod.WithLocalVolumes(c.LocalVolumes))
 	}
 
 	if len(c.Command) != 0 {
