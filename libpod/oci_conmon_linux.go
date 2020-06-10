@@ -1161,6 +1161,8 @@ func (r *ConmonOCIRuntime) sharedConmonArgs(ctr *Container, cuuid, bundlePath, p
 		logDriverArg = define.JournaldLogging
 	case define.JSONLogging:
 		fallthrough
+	case define.NoLogging:
+		logDriverArg = define.NoLogging
 	default: //nolint-stylecheck
 		// No case here should happen except JSONLogging, but keep this here in case the options are extended
 		logrus.Errorf("%s logging specified but not supported. Choosing k8s-file logging instead", ctr.LogDriver())
