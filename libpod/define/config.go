@@ -73,5 +73,5 @@ const KubernetesLogging = "k8s-file"
 // JSONLogging is the string conmon expects when specifying to use the json logging format
 const JSONLogging = "json-file"
 
-// NONELogging is the string conmon expects when specifying to use no log driver whatsoever
-const NONELogging = "none"
+// NoLogging is the string conmon expects when specifying to use no log driver whatsoever
+const NoLogging = "none"
