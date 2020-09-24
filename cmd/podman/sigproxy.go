@@ -19,7 +19,7 @@ func ProxySignals(ctr *libpod.Container) {
 		for s := range sigBuffer {
 			// Ignore SIGCHLD and SIGPIPE - these are mostly likely
 			// intended for the podman command itself.
-			if s == signal.SIGCHLD || s == signal.SIGPIPE {
+			if s == syscall.SIGCHLD || s == syscall.SIGPIPE || s == syscall.SIGURG {
 				continue
 			}
 
