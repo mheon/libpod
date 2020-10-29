@@ -4,9 +4,11 @@ import (
 	"os"
 	"syscall"
 
+	"github.com/containers/podman/v/libpod/define"
 	"github.com/containers/podman/v2/libpod"
 	"github.com/containers/podman/v2/libpod/shutdown"
 	"github.com/containers/podman/v2/pkg/signal"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
