@@ -718,6 +718,24 @@ func (c *Container) generateSpec(ctx context.Context) (*spec.Spec, error) {
 		return nil, errors.Wrapf(err, "error setting up OCI Hooks")
 	}
 
+	// Disable generation of read-only paths as rootless when pid=host.
+	// Works around a runc bug (this works as crun).
+	if rootless.IsRootless() {
+		hasPidNS := false
+
+		for _, ns := range g.Config.Linux.Namespaces {
+			if ns.Type == spec.PIDNamespace {
+				hasPidNS = true
+				break
+			}
+		}
+
+		if !hasPidNS {
+			g.Config.Linux.ReadonlyPaths = []string{}
+		}
+	}
+
+
 	return g.Config, nil
 }
 
