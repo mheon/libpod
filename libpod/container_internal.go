@@ -280,6 +280,17 @@ func (c *Container) handleRestartPolicy(ctx context.Context) (_ bool, retErr err
 			}
 		}
 	}()
+
+	if c.state.ConmonPID != 0 {
+		// Ignore errors from FindProcess() as conmon could already have exited.
+		p, err := os.FindProcess(c.state.ConmonPID)
+		if p != nil && err == nil {
+			if err = p.Kill(); err != nil {
+				logrus.Debugf("error killing conmon process: %v", err)
+			}
+		}
+	}
+
 	if err := c.prepare(); err != nil {
 		return false, err
 	}
