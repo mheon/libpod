@@ -1,3 +1,5 @@
+// +build linux
+
 package libpod
 
 import (
@@ -12,6 +14,7 @@ import (
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sys/unix"
 )
 
 // Timeout before declaring that runtime has failed to kill a given
@@ -67,6 +70,7 @@ func bindPorts(ports []ocicni.PortMapping) ([]*os.File, error) {
 			if err != nil {
 				return nil, errors.Wrapf(err, "cannot get file for UDP socket")
 			}
+
 			files = append(files, f)
 
 		case "tcp":
@@ -94,6 +98,9 @@ func bindPorts(ports []ocicni.PortMapping) ([]*os.File, error) {
 			f, err := server.File()
 			if err != nil {
 				return nil, errors.Wrapf(err, "cannot get file for TCP socket")
+			}
+			if err := unix.SetsockoptInt(int(f.Fd()), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1); err != nil {
+				return nil, errors.Wrapf(err, "cannot set SO_REUSEADDR for TCP port %d", i.HostPort)
 			}
 			files = append(files, f)
 		case "sctp":
