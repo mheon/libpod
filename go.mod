@@ -14,11 +14,11 @@ require (
 	github.com/containers/buildah v1.20.2-0.20210504130217-903dc56408ac
 	github.com/containers/common v0.37.2-0.20210503193405-42134aa138ce
 	github.com/containers/conmon v2.0.20+incompatible
-	github.com/containers/image/v5 v5.11.1
-	github.com/containers/ocicrypt v1.1.1
+	github.com/containers/image/v5 v5.14.0
+	github.com/containers/ocicrypt v1.1.2
 	github.com/containers/psgo v1.5.2
-	github.com/containers/storage v1.30.1
-	github.com/coreos/go-systemd/v22 v22.3.1
+	github.com/containers/storage v1.32.6
+	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/coreos/stream-metadata-go v0.0.0-20210225230131-70edb9eb47b3
 	github.com/cri-o/ocicni v0.2.1-0.20210301205850-541cf7c703cf
 	github.com/cyphar/filepath-securejoin v0.2.2
@@ -46,10 +46,10 @@ require (
 	github.com/onsi/gomega v1.11.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
-	github.com/opencontainers/runc v1.0.0-rc93
-	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
+	github.com/opencontainers/runc v1.0.0
+	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/opencontainers/runtime-tools v0.9.0
-	github.com/opencontainers/selinux v1.8.0
+	github.com/opencontainers/selinux v1.8.2
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/rootless-containers/rootlesskit v0.14.2
@@ -61,10 +61,10 @@ require (
 	github.com/uber/jaeger-client-go v2.28.0+incompatible
 	github.com/vbauerster/mpb/v6 v6.0.3
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
-	go.etcd.io/bbolt v1.3.5
+	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
-	golang.org/x/sys v0.0.0-20210324051608-47abb6519492
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
