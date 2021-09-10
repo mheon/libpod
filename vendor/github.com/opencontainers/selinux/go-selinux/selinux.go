@@ -1,7 +1,7 @@
 package selinux
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 )
 
 const (
@@ -11,9 +11,10 @@ const (
 	Permissive = 0
 	// Disabled constant to indicate SELinux is disabled
 	Disabled = -1
-
+	// maxCategory is the maximum number of categories used within containers
+	maxCategory = 1024
 	// DefaultCategoryRange is the upper bound on the category range
-	DefaultCategoryRange = uint32(1024)
+	DefaultCategoryRange = uint32(maxCategory)
 )
 
 var (
@@ -37,6 +38,8 @@ var (
 
 	// CategoryRange allows the upper bound on the category range to be adjusted
 	CategoryRange = DefaultCategoryRange
+
+	privContainerMountLabel string
 )
 
 // Context is a representation of the SELinux label broken into 4 parts
@@ -275,4 +278,11 @@ func DisableSecOpt() []string {
 // file.
 func GetDefaultContextWithLevel(user, level, scon string) (string, error) {
 	return getDefaultContextWithLevel(user, level, scon)
+}
+
+// PrivContainerMountLabel returns mount label for privileged containers
+func PrivContainerMountLabel() string {
+	// Make sure label is initialized.
+	_ = label("")
+	return privContainerMountLabel
 }
