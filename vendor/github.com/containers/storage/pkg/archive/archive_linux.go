@@ -36,7 +36,7 @@ func (o overlayWhiteoutConverter) ConvertWrite(hdr *tar.Header, path string, fi 
 		// we just rename the file and make it normal
 		dir, filename := filepath.Split(hdr.Name)
 		hdr.Name = filepath.Join(dir, WhiteoutPrefix+filename)
-		hdr.Mode = 0600
+		hdr.Mode = 0
 		hdr.Typeflag = tar.TypeReg
 		hdr.Size = 0
 	}
@@ -129,6 +129,17 @@ func (overlayWhiteoutConverter) ConvertReadWithHandler(hdr *tar.Header, path str
 		originalPath := filepath.Join(dir, originalBase)
 
 		if err := handler.Mknod(originalPath, unix.S_IFCHR, 0); err != nil {
+			// If someone does:
+			//     rm -rf /foo/bar
+			// in an image, some tools will generate a layer with:
+			//     /.wh.foo
+			//     /foo/.wh.bar
+			// and when doing the second mknod(), we will fail with
+			// ENOTDIR, since the previous /foo was mknod()'d as a
+			// character device node and not a directory.
+			if isENOTDIR(err) {
+				return false, nil
+			}
 			return false, err
 		}
 		if err := handler.Chown(originalPath, hdr.Uid, hdr.Gid); err != nil {
@@ -177,4 +188,23 @@ func GetFileOwner(path string) (uint32, uint32, uint32, error) {
 		return s.Uid, s.Gid, s.Mode & 07777, nil
 	}
 	return 0, 0, uint32(f.Mode()), nil
+}
+
+func handleLChmod(hdr *tar.Header, path string, hdrInfo os.FileInfo, forceMask *os.FileMode) error {
+	permissionsMask := hdrInfo.Mode()
+	if forceMask != nil {
+		permissionsMask = *forceMask
+	}
+	if hdr.Typeflag == tar.TypeLink {
+		if fi, err := os.Lstat(hdr.Linkname); err == nil && (fi.Mode()&os.ModeSymlink == 0) {
+			if err := os.Chmod(path, permissionsMask); err != nil {
+				return err
+			}
+		}
+	} else if hdr.Typeflag != tar.TypeSymlink {
+		if err := os.Chmod(path, permissionsMask); err != nil {
+			return err
+		}
+	}
+	return nil
 }
