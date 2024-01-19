@@ -90,7 +90,7 @@ func (ic *ContainerEngine) createServiceContainer(ctx context.Context, name stri
 	if err := specgenutil.FillOutSpecGen(s, &ctrOpts, []string{}); err != nil {
 		return nil, fmt.Errorf("completing spec for service container: %w", err)
 	}
-	s.Name = name
+	s.Name = &name
 
 	expandForKube(s)
 	runtimeSpec, spec, opts, err := generate.MakeContainer(ctx, ic.Libpod, s, false, nil)
@@ -111,7 +111,7 @@ func (ic *ContainerEngine) createServiceContainer(ctx context.Context, name stri
 	opts = append(opts, libpod.WithSdNotifyMode(define.SdNotifyModeIgnore))
 
 	if options.Replace {
-		if _, err := ic.ContainerRm(ctx, []string{spec.Name}, entities.RmOptions{Force: true, Ignore: true}); err != nil {
+		if _, err := ic.ContainerRm(ctx, []string{name}, entities.RmOptions{Force: true, Ignore: true}); err != nil {
 			return nil, err
 		}
 	}
@@ -689,11 +689,12 @@ func (ic *ContainerEngine) playKubePod(ctx context.Context, podName string, podY
 		podSpec.PodSpecGen.NoInfra = false
 		podSpec.PodSpecGen.InfraContainerSpec = specgen.NewSpecGenerator(infraImage, false)
 		podSpec.PodSpecGen.InfraContainerSpec.NetworkOptions = p.NetworkOptions
-		podSpec.PodSpecGen.InfraContainerSpec.SdNotifyMode = define.SdNotifyModeIgnore
+		localSDNotify := define.SdNotifyModeIgnore
+		podSpec.PodSpecGen.InfraContainerSpec.SdNotifyMode = &localSDNotify
 		// If the infraNameAnnotation is set in the yaml, use that as the infra container name
 		// If not, fall back to the default infra container name
 		if v, ok := podYAML.Annotations[define.InfraNameAnnotation]; ok {
-			podSpec.PodSpecGen.InfraContainerSpec.Name = v
+			podSpec.PodSpecGen.InfraContainerSpec.Name = &v
 		}
 
 		err = specgenutil.FillOutSpecGen(podSpec.PodSpecGen.InfraContainerSpec, &infraOptions, []string{})
@@ -822,7 +823,8 @@ func (ic *ContainerEngine) playKubePod(ctx context.Context, podName string, podY
 			logrus.Warn(w)
 		}
 
-		specGen.SdNotifyMode = define.SdNotifyModeIgnore
+		localSDNotify := define.SdNotifyModeIgnore
+		specGen.SdNotifyMode = &localSDNotify
 		expandForKube(specGen)
 		rtSpec, spec, opts, err := generate.MakeContainer(ctx, ic.Libpod, specGen, false, nil)
 		if err != nil {
@@ -830,8 +832,10 @@ func (ic *ContainerEngine) playKubePod(ctx context.Context, podName string, podY
 		}
 		opts = append(opts, libpod.WithSdNotifyMode(define.SdNotifyModeIgnore))
 		if options.Replace {
-			if _, err := ic.ContainerRm(ctx, []string{spec.Name}, entities.RmOptions{Force: true, Ignore: true}); err != nil {
-				return nil, nil, err
+			if spec.Name != nil {
+				if _, err := ic.ContainerRm(ctx, []string{*spec.Name}, entities.RmOptions{Force: true, Ignore: true}); err != nil {
+					return nil, nil, err
+				}
 			}
 		}
 
@@ -903,7 +907,7 @@ func (ic *ContainerEngine) playKubePod(ctx context.Context, podName string, podY
 			logrus.Warn(w)
 		}
 
-		specGen.RawImageName = container.Image
+		specGen.RawImageName = &container.Image
 		expandForKube(specGen)
 		rtSpec, spec, opts, err := generate.MakeContainer(ctx, ic.Libpod, specGen, false, nil)
 		if err != nil {
@@ -936,8 +940,10 @@ func (ic *ContainerEngine) playKubePod(ctx context.Context, podName string, podY
 		}
 
 		if options.Replace {
-			if _, err := ic.ContainerRm(ctx, []string{spec.Name}, entities.RmOptions{Force: true, Ignore: true}); err != nil {
-				return nil, nil, err
+			if spec.Name != nil {
+				if _, err := ic.ContainerRm(ctx, []string{*spec.Name}, entities.RmOptions{Force: true, Ignore: true}); err != nil {
+					return nil, nil, err
+				}
 			}
 		}
 
