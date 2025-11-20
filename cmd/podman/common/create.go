@@ -5,8 +5,11 @@ import (
 	"time"
 
 	"github.com/containers/podman/v5/cmd/podman/registry"
+	"github.com/containers/podman/v5/cmd/podman/unifiedcli"
 	"github.com/containers/podman/v5/libpod/define"
 	"github.com/containers/podman/v5/pkg/domain/entities"
+	"github.com/containers/podman/v5/pkg/specgen"
+	"github.com/containers/podman/v5/pkg/systemd/quadlet"
 	"github.com/spf13/cobra"
 	"go.podman.io/common/pkg/auth"
 	"go.podman.io/common/pkg/completion"
@@ -41,6 +44,21 @@ func DefineCreateFlags(cmd *cobra.Command, cf *entities.ContainerCreateOptions, 
 			"Add annotations to container (key=value)",
 		)
 		_ = cmd.RegisterFlagCompletionFunc(annotationFlagName, completion.AutocompleteNone)
+		annotationOpt := new(unifiedcli.CLIOption[[]string, map[string]string])
+		annotationOpt.CLIOptionName = annotationFlagName
+		annotationOpt.QuadletKeyName = quadlet.KeyAnnotation
+		annotationOpt.QuadletGroupName = quadlet.ContainerGroup
+		annotationOpt.CLIRetrieveFn = unifiedcli.RetrieveStringArrayFromCLI
+		annotationOpt.CLIParseFn = unifiedcli.ParseKVStringsOverDefaults
+		annotationOpt.SpecgenField = func(g *specgen.SpecGenerator) *map[string]string {
+			return &(g.Annotations)
+		}
+		// Not a pod option
+		annotationOpt.QuadletParseFn = unifiedcli.QuadletParseOptionBeforeEvery
+
+		if err := unifiedcli.AddStringArrayOption(unifiedcli.CLIOption[[]string, any](annotationOpt)); err != nil {
+			panic(err)
+		}
 
 		attachFlagName := "attach"
 		createFlags.StringSliceVarP(
