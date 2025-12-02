@@ -43,6 +43,7 @@ type PodmanConfig struct {
 	TLSDetailsFile           string   // Path to a containers-tls-details.yaml(5) file
 	IsRenumber               bool     // Is this a system renumber command? If so, a number of checks will be relaxed
 	IsReset                  bool     // Is this a system reset command? If so, a number of checks will be skipped/omitted
+	IsMigrateDB              bool     // Is this a system migrate --migrate-db command? If so, certain BoltDB related errors will be suppressed
 	MaxWorks                 int      // maximum number of parallel threads
 	MemoryProfile            string   // Hidden: Should memory profile be taken
 	RegistriesConf           string   // allows for specifying a custom registries.conf

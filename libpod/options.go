@@ -350,26 +350,6 @@ func WithNetworkConfigDir(dir string) RuntimeOption {
 	}
 }
 
-// WithNamespace sets the namespace for libpod.
-// Namespaces are used to create scopes to separate containers and pods
-// in the state.
-// When namespace is set, libpod will only view containers and pods in
-// the same namespace. All containers and pods created will default to
-// the namespace set here.
-// A namespace of "", the empty string, is equivalent to no namespace,
-// and all containers and pods will be visible.
-func WithNamespace(ns string) RuntimeOption {
-	return func(rt *Runtime) error {
-		if rt.valid {
-			return define.ErrRuntimeFinalized
-		}
-
-		rt.config.Engine.Namespace = ns
-
-		return nil
-	}
-}
-
 // WithVolumePath sets the path under which all named volumes
 // should be created.
 // The path changes based on whether the user is running as root or not.
@@ -446,6 +426,9 @@ func WithEnableSDNotify() RuntimeOption {
 // WithSyslog sets a runtime option so we know that we have to log to the syslog as well
 func WithSyslog() RuntimeOption {
 	return func(rt *Runtime) error {
+		if rt.valid {
+			return define.ErrRuntimeFinalized
+		}
 		rt.syslog = true
 		return nil
 	}
@@ -458,6 +441,20 @@ func WithRuntimeFlags(runtimeFlags []string) RuntimeOption {
 			return define.ErrRuntimeFinalized
 		}
 		rt.runtimeFlags = runtimeFlags
+		return nil
+	}
+}
+
+// WithNoBoltError suppresses errors when a Bolt database exists, which would
+// otherwise prevent creation of a runtime. Useful when migrating the BoltDB
+// database to SQLite, which is otherwise impossible as we'll error before
+// getting to the migration code.
+func WithNoBoltError() RuntimeOption {
+	return func(rt *Runtime) error {
+		if rt.valid {
+			return define.ErrRuntimeFinalized
+		}
+		rt.noBoltError = true
 		return nil
 	}
 }

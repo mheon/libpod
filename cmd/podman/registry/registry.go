@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -71,6 +72,16 @@ func NewContainerEngine(cmd *cobra.Command, _ []string) (entities.ContainerEngin
 		if cmd.Name() == "renumber" && cmd.Parent().Name() == "system" {
 			logrus.Debugf("Performing system renumber, runtime validation checks will be relaxed")
 			podmanOptions.IsRenumber = true
+		}
+		if cmd.Name() == "migrate" && cmd.Parent().Name() == "system" {
+			isMigrateDB, err := cmd.Flags().GetBool("migrate-db")
+			if err != nil {
+				return nil, errors.New("system migrate command missing flag migrate-db")
+			}
+			if isMigrateDB {
+				podmanOptions.IsMigrateDB = true
+				logrus.Debugf("Performing database migration, BoltDB checks will be relaxed")
+			}
 		}
 		engine, err := infra.NewContainerEngine(&podmanOptions)
 		if err != nil {

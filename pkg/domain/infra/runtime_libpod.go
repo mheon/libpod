@@ -32,20 +32,22 @@ var (
 )
 
 type engineOpts struct {
-	withFDS  bool
-	reset    bool
-	renumber bool
-	config   *entities.PodmanConfig
+	withFDS     bool
+	reset       bool
+	renumber    bool
+	noBoltError bool
+	config      *entities.PodmanConfig
 }
 
 // GetRuntime generates a new libpod runtime configured by command line options
 func GetRuntime(ctx context.Context, flags *flag.FlagSet, cfg *entities.PodmanConfig) (*libpod.Runtime, error) {
 	runtimeSync.Do(func() {
 		runtimeLib, runtimeErr = getRuntime(ctx, flags, &engineOpts{
-			withFDS:  true,
-			reset:    cfg.IsReset,
-			renumber: cfg.IsRenumber,
-			config:   cfg,
+			withFDS:     true,
+			reset:       cfg.IsReset,
+			renumber:    cfg.IsRenumber,
+			noBoltError: cfg.IsMigrateDB,
+			config:      cfg,
 		})
 	})
 	return runtimeLib, runtimeErr
@@ -132,6 +134,9 @@ func getRuntime(ctx context.Context, fs *flag.FlagSet, opts *engineOpts) (*libpo
 	if opts.renumber {
 		options = append(options, libpod.WithRenumber())
 	}
+	if opts.noBoltError {
+		options = append(options, libpod.WithNoBoltError())
+	}
 
 	if len(cfg.RuntimeFlags) > 0 {
 		runtimeFlags := []string{}
@@ -148,10 +153,6 @@ func getRuntime(ctx context.Context, fs *flag.FlagSet, opts *engineOpts) (*libpo
 
 	// TODO CLI flags for image config?
 	// TODO CLI flag for signature policy?
-
-	if len(cfg.ContainersConf.Engine.Namespace) > 0 {
-		options = append(options, libpod.WithNamespace(cfg.ContainersConf.Engine.Namespace))
-	}
 
 	if fs.Changed("runtime") {
 		options = append(options, libpod.WithOCIRuntime(cfg.RuntimePath))

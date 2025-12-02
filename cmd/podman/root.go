@@ -382,7 +382,10 @@ func persistentPreRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	// Prep the engines
-	if _, err := registry.NewImageEngine(cmd, args); err != nil {
+	// Container engine MUST be first.
+	// We have special handling in there for passing flags to the runtime, that is ignored by the image engine.
+	// Which creates a container engine, because there isn't an entrypoint to Libimage that isn't Libpod.
+	if _, err := registry.NewContainerEngine(cmd, args); err != nil {
 		// Note: this is gross, but it is the hand we are dealt
 		if registry.IsRemote() && errors.As(err, &bindings.ConnectError{}) && cmd.Parent() == cmd.Root() {
 			switch cmd.Name() {
@@ -404,7 +407,7 @@ func persistentPreRunE(cmd *cobra.Command, args []string) error {
 		}
 		return err
 	}
-	if _, err := registry.NewContainerEngine(cmd, args); err != nil {
+	if _, err := registry.NewImageEngine(cmd, args); err != nil {
 		return err
 	}
 

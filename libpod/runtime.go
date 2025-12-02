@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -107,6 +108,10 @@ type Runtime struct {
 	// errors related to lock initialization so a renumber can be performed
 	// if something has gone wrong.
 	doRenumber bool
+	// Do not error on a BoltDB database existing. Useful for commanding
+	// a database migration, as we can't actually get to the migration code
+	// with an existing Bolt database otherwise.
+	noBoltError bool
 
 	// valid indicates whether the runtime is ready to use.
 	// valid is set to true when a runtime is returned from GetRuntime(),
@@ -278,6 +283,8 @@ func getLockManager(runtime *Runtime) (lock.Manager, error) {
 	return manager, nil
 }
 
+var errBoltExists = errors.New("legacy database exists")
+
 func getDBState(runtime *Runtime) (State, error) {
 	// TODO - if we further break out the state implementation into
 	// libpod/state, the config could take care of the code below.  It
@@ -290,8 +297,24 @@ func getDBState(runtime *Runtime) (State, error) {
 
 	switch backend {
 	case config.DBBackendBoltDB:
-		return nil, fmt.Errorf("the BoltDB database backend was removed in Podman 6.0")
+		return nil, fmt.Errorf("the BoltDB database backend was removed in Podman 6.0 - please comment out the `database_backend` line in containers.conf and migrate to SQLite by rebooting the system or using the `podman system migrate --migrate-db` command")
 	case config.DBBackendDefault:
+		if !runtime.noBoltError {
+			boltDBPath := getBoltDBPath(runtime)
+			if err := fileutils.Exists(boltDBPath); err == nil {
+				// We need to return a valid state.
+				// The error below can be discarded if we are performing a state refresh - in which case we migrate the BoltDB database.
+				// Problem: We cannot know if a refresh is happening until almost the end of runtime init.
+				// And we can't really change that - it has to be after the database is set up.
+				// (We need paths from the state to know where to check for the alive file).
+				// Solution is to return a valid state, and defer handling the errBoltExists error until we are sure we are/are not refreshing.
+				sqliteState, err := NewSqliteState(runtime)
+				if err != nil {
+					return nil, err
+				}
+				return sqliteState, fmt.Errorf("a BoltDB database exists but is no longer being used. BoltDB support was removed in the Podman 6.0 release. The legacy database can be migrated to SQLite by rebooting and running Podman again or using the `podman system migrate --migrate-db` command. IMPORTANT: Only use the `system migrate` command when you can ensure there are no other Podman processes running. If you are not absolutely sure of this, it is strongly recommended that you reboot. If you do not care about the contents of the legacy database, you can rename or remove the legacy database at %q to suppress this error: %w", boltDBPath, errBoltExists)
+			}
+		}
 		fallthrough
 	case config.DBBackendSQLite:
 		return NewSqliteState(runtime)
@@ -341,10 +364,44 @@ func makeRuntime(ctx context.Context, runtime *Runtime) (retErr error) {
 		return fmt.Errorf("creating runtime volume path directory: %w", err)
 	}
 
+	// Check if a SQLite DB exists prior to getting a DB.
+	// If it does not, and we have a Bolt database, we may need to remove the SQLite DB
+	// that is created below if we are not performing a database migration.
+	// This ensures that reverting to Podman 5.8.2 will not default to SQLite and break things.
+	sqliteDBExists := checkSQLiteDBExists(runtime)
+
 	// Set up the state.
+	boltExists := false
+	var boltError error
 	runtime.state, err = getDBState(runtime)
 	if err != nil {
-		return err
+		if errors.Is(err, errBoltExists) {
+			boltExists = true
+			boltError = err
+		} else {
+			return err
+		}
+	}
+
+	// We did not have a SQLite DB before Podman ran.
+	// Remove the one that was created (if one was created) so we don't break reverting to 5.8
+	removeSQLite := false
+	if !sqliteDBExists && boltExists {
+		removeSQLite = true
+		defer func() {
+			if removeSQLite {
+				// Do a final check that the BoltDB state still exists.
+				// If it doesn't, someone else probably performed a migration to SQLite before we got here.
+				// In that case, it'd be bad to remove the now in use database.
+				if err := fileutils.Exists(getBoltDBPath(runtime)); err != nil {
+					return
+				}
+				sqlitePath := sqliteStatePath(runtime)
+				if err := os.Remove(sqlitePath); err != nil && !errors.Is(err, fs.ErrNotExist) {
+					logrus.Errorf("Error removing SQLite DB %s created during Podman init: %v", sqlitePath, err)
+				}
+			}
+		}()
 	}
 
 	// Grab config from the database so we can reset some defaults
@@ -572,9 +629,14 @@ func makeRuntime(ctx context.Context, runtime *Runtime) (retErr error) {
 		// As such, it's not really a performance concern
 		if errors.Is(err, os.ErrNotExist) {
 			doRefresh = true
+			removeSQLite = false
 		} else {
 			return fmt.Errorf("reading runtime status file %s: %w", runtimeAliveFile, err)
 		}
+	}
+
+	if !doRefresh && boltExists {
+		return boltError
 	}
 
 	runtime.lockManager, err = getLockManager(runtime)
@@ -791,6 +853,14 @@ func (r *Runtime) Shutdown(force bool) error {
 // Does not check validity as the runtime is not valid until after this has run
 func (r *Runtime) refresh(ctx context.Context, alivePath string) error {
 	logrus.Debugf("Podman detected system restart - performing state refresh")
+
+	// Only error that can be returned is no BoltDB present.
+	// In that case, no need to do anything.
+	if err := r.checkCanMigrate(); err == nil {
+		if err := r.migrateDB(); err != nil {
+			logrus.Errorf("Automatic migration from BoltDB to SQLite failed: %v", err)
+		}
+	}
 
 	// Clear state of database if not running in container
 	if !graphRootMounted() {
