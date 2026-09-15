@@ -1,5 +1,16 @@
 # Release Notes
 
+## 6.1.2
+### Security
+- This release addresses ([CVE-2025-11395](https://github.com/podman-container-tools/container-libs/security/advisories/GHSA-3gcv-x57j-xqxv)), where importing images containing crafted layer tarballs with the `podman load` command, or importing volumes containing crafted symlinks with `podman volume import`, allows overwriting files on the host.
+- This release also addresses [CVE-2026-79699](https://github.com/podman-container-tools/container-libs/security/advisories/GHSA-mmq6-9mjh-hvq3) and [CVE-2026-79705](https://github.com/podman-container-tools/buildah/security/advisories/GHSA-3528-5p26-cf44), though we do not believe these CVEs are exploitable through the Podman command line.
+
+### Misc
+- Updated Buildah to v1.45.1
+- Updated Common to v0.69.2
+- Updated Image to v5.41.2
+- Updated Storage to v1.64.1
+
 ## 6.1.1
 ### Security
 - This release addresses CVE-2026-17106, where a crafted tar archive could write outside the extraction directory through the use of malicious links ([GHSA-hfg8-hc9c-6c3h](https://github.com/moby/go-archive/security/advisories/GHSA-hfg8-hc9c-6c3h)).
