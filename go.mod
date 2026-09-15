@@ -12,7 +12,7 @@ require (
 	github.com/checkpoint-restore/checkpointctl v1.4.0
 	github.com/checkpoint-restore/go-criu/v7 v7.2.0
 	github.com/containernetworking/plugins v1.8.0
-	github.com/containers/buildah v1.43.2
+	github.com/containers/buildah v1.43.4
 	github.com/containers/conmon v2.0.20+incompatible
 	github.com/containers/gvisor-tap-vsock v0.8.9
 	github.com/containers/libhvee v0.10.1-0.20250829163521-178d10e67860
@@ -66,9 +66,9 @@ require (
 	github.com/vbauerster/mpb/v8 v8.10.2
 	github.com/vishvananda/netlink v1.3.1
 	go.etcd.io/bbolt v1.4.3
-	go.podman.io/common v0.67.1
-	go.podman.io/image/v5 v5.39.2
-	go.podman.io/storage v1.62.0
+	go.podman.io/common v0.67.2
+	go.podman.io/image/v5 v5.39.3
+	go.podman.io/storage v1.62.1
 	golang.org/x/crypto v0.56.0
 	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0
@@ -171,7 +171,7 @@ require (
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
-	github.com/vbatts/tar-split v0.12.1 // indirect
+	github.com/vbatts/tar-split v0.12.3 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
