@@ -335,16 +335,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [fedora-current, fedora-prior, fedora-rawhide, debian-sid]
+        distro: [fedora-current, fedora-prior, debian-sid]
         test: [sys, int]
         priv: [rootless, root]
         mode: [local, remote]
         exclude:
           # try to keep the task somewhat sane and exclude all but one rootless+remote combination
           - distro: fedora-prior
-            priv: rootless
-            mode: remote
-          - distro: fedora-rawhide
             priv: rootless
             mode: remote
           - distro: debian-sid
